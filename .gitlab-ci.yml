@@ -1,0 +1,44 @@
+image: maven:latest
+
+# Stages définis pour les différentes étapes du pipeline
+stages:
+  - build
+  - test
+  - package
+  - dockerize
+
+# Définition des jobs pour chaque étape
+# Définition des jobs pour chaque étape
+build_job:
+  stage: build
+  tags:
+      - docker
+  script:
+    - mvn compile
+
+test:
+  stage: test
+  tags:
+      - docker
+  script:
+    - mvn test
+
+package:
+  stage: package
+  tags:
+      - docker
+  script:
+    - mvn package
+
+dockerize:
+  image: docker:19.03.12
+  services:
+    - docker:19.03.12-dind
+  stage: dockerize
+  script:
+    - echo $CI_REGISTRY
+    - echo ls -a
+    - docker build -t $DOCKER_IMAGE_NAME .
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker tag $DOCKER_IMAGE_NAME:latest $CI_REGISTRY_IMAGE/$DOCKER_IMAGE_NAME:latest
+    - docker push $CI_REGISTRY_IMAGE/$DOCKER_IMAGE_NAME:latest
